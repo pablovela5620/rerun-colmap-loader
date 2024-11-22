@@ -4,7 +4,7 @@ dependencies = [
     "opencv-python>=4.10.0.84,<5",
     "requests>=2.32.3,<3",
     "tqdm>=4.67.0,<5",
-    "rerun-sdk>=0.20.1",
+    "rerun-sdk",
 ]
 description = "Add a short description here"
 name = "rerun-colmap-loader"
