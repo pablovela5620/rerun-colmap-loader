@@ -21,20 +21,6 @@ from tqdm import tqdm
 
 from .read_write_model import Camera, read_model  # type: ignore[attr-defined]
 
-DESCRIPTION = """
-# Sparse reconstruction by COLMAP
-This example was generated from the output of a sparse reconstruction done with COLMAP.
-
-[COLMAP](https://colmap.github.io/index.html) is a general-purpose Structure-from-Motion (SfM) and Multi-View Stereo
-(MVS) pipeline with a graphical and command-line interface.
-
-In this example a short video clip has been processed offline by the COLMAP pipeline, and we use Rerun to visualize the
-individual camera frames, estimated camera poses, and resulting point clouds over time.
-
-The full source code for this example is available
-[on GitHub](https://github.com/rerun-io/rerun/blob/latest/examples/python/structure_from_motion).
-""".strip()
-
 DATASET_DIR: Final = Path(__file__).parent.parent / "dataset"
 DATASET_URL_BASE: Final = "https://storage.googleapis.com/rerun-example-datasets/colmap"
 # When dataset filtering is turned on, drop views with less than this many valid points.
@@ -128,11 +114,6 @@ def read_and_log_sparse_reconstruction(
             if point.rgb.any() and len(point.image_ids) > 4
         }
 
-    rr.log(
-        "description",
-        rr.TextDocument(DESCRIPTION, media_type=rr.MediaType.MARKDOWN),
-        static=True,
-    )
     rr.log("/", rr.ViewCoordinates.RIGHT_HAND_Y_DOWN, static=True)
     rr.log("plot/avg_reproj_err", rr.SeriesLine(color=[240, 45, 58]), static=True)
 
@@ -226,42 +207,43 @@ def read_and_log_sparse_reconstruction(
         )
 
 
+# The Rerun Viewer will always pass these two pieces of information:
+# 1. The path to be loaded, as a positional arg.
+# 2. A shared recording ID, via the `--recording-id` flag.
+#
+# It is up to you whether you make use of that shared recording ID or not.
+# If you use it, the data will end up in the same recording as all other plugins interested in
+# that file, otherwise you can just create a dedicated recording for it. Or both.
+parser = ArgumentParser(
+    description="""
+Colmap reconstruction loader for Rerun.
+
+To try it out, copy it in your $PATH as `rerun-colmap-loader`,
+then open a colmap reconstruction with Rerun (`rerun `).
+    """
+)
+parser.add_argument("filepath", type=str)
+parser.add_argument("--recording-id", type=str)
+args = parser.parse_args()
+
+
 def main() -> None:
-    parser = ArgumentParser(
-        description="Visualize the output of COLMAP's sparse reconstruction on a video."
-    )
-    parser.add_argument(
-        "--unfiltered",
-        action="store_true",
-        help="If set, we don't filter away any noisy data.",
-    )
-    parser.add_argument("--dataset-path", type=Path, required=True)
-    parser.add_argument(
-        "--resize", action="store", help="Target resolution to resize images"
-    )
-    rr.script_add_args(parser)
-    args = parser.parse_args()
+    # is_dir: bool = os.path.isdir(args.filepath)
+    is_file: bool = os.path.isfile(args.filepath)
+    # is_tb_summary_file: bool = ".bin" in args.filepath
 
-    if args.resize:
-        args.resize = tuple(int(x) for x in args.resize.split("x"))
+    # Inform the Rerun Viewer that we do not support that kind of file.
+    if not is_file:
+        exit(rr.EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE)
 
-    blueprint = rrb.Vertical(
-        rrb.Spatial3DView(name="3D", origin="/"),
-        rrb.Horizontal(
-            rrb.TextDocumentView(name="README", origin="/description"),
-            rrb.Spatial2DView(name="Camera", origin="/camera/image"),
-            rrb.TimeSeriesView(origin="/plot"),
-        ),
-        row_shares=[3, 2],
+    rr.init(
+        "rerun_example_external_data_loader_tfrecord", recording_id=args.recording_id
     )
-
-    rr.script_setup(
-        args, "rerun_example_structure_from_motion", default_blueprint=blueprint
-    )
-    read_and_log_sparse_reconstruction(
-        args.dataset_path, filter_output=not args.unfiltered, resize=args.resize
-    )
-    rr.script_teardown(args)
+    # The most important part of this: log to standard output so the Rerun Viewer can ingest it!
+    rr.stdout()
+    print("Loading COLMAP reconstruction")
+    rr.log("text", rr.TextDocument("Loading COLMAP reconstruction"))
+    # read_and_log_sparse_reconstruction(args.filepath, filter_output=False, resize=None)
 
 
 if __name__ == "__main__":
