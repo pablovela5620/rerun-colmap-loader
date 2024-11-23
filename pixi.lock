@@ -2436,12 +2436,12 @@ packages:
   name: rerun-colmap-loader
   version: 0.1.0
   path: .
-  sha256: da6b4814af4ecdab338ae49e7cef04044e8aa4e303809f807910e4b54deaf09d
+  sha256: 31234e559f912aa5b44bcd1a3c054f636b7cb6ce9978f9f4ef3f8325ea2498fb
   requires_dist:
   - opencv-python>=4.10.0.84,<5
   - requests>=2.32.3,<3
   - tqdm>=4.67.0,<5
-  - rerun-sdk>=0.20.1
+  - rerun-sdk
   requires_python: '>=3.11'
   editable: true
 - kind: conda

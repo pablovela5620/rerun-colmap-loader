@@ -228,12 +228,13 @@ args = parser.parse_args()
 
 
 def main() -> None:
-    # is_dir: bool = os.path.isdir(args.filepath)
     is_file: bool = os.path.isfile(args.filepath)
-    # is_tb_summary_file: bool = ".bin" in args.filepath
+    is_colmap_bin_file: bool = ".bin" in args.filepath
+
+    # iterate through all files in the directory
 
     # Inform the Rerun Viewer that we do not support that kind of file.
-    if not is_file:
+    if not is_file or not is_colmap_bin_file:
         exit(rr.EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE)
 
     rr.init(
