@@ -189,6 +189,7 @@ def read_and_log_sparse_reconstruction(
                 translation=image.tvec,
                 rotation=rr.Quaternion(xyzw=quat_xyzw),
                 from_parent=True,
+                axis_length=0.5,
             ),
         )
         rr.log(
@@ -203,6 +204,7 @@ def read_and_log_sparse_reconstruction(
                 resolution=[camera.width, camera.height],
                 focal_length=camera.params[:2],
                 principal_point=camera.params[2:],
+                image_plane_distance=0.5,
             ),
         )
 
