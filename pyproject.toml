@@ -6,8 +6,8 @@ dependencies = [
     "tqdm>=4.67.0,<5",
     "rerun-sdk",
 ]
-description = "Add a short description here"
-name = "rerun-colmap-loader"
+description = "A rerun data loader for sequential colmap data."
+name = "rerun-loader-colmap"
 requires-python = ">= 3.11"
 version = "0.1.0"
 
@@ -16,17 +16,17 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["rerun_colmap_loader*"]
+include = ["rerun_loader_colmap*"]
 
 [project.scripts]
-rerun-colmap-loader = "rerun_colmap_loader.main:main"
+rerun-loader-colmap = "rerun_loader_colmap.main:main"
 
 [tool.pixi.project]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.pypi-dependencies]
-rerun_colmap_loader = { path = ".", editable = true }
+rerun_loader_colmap = { path = ".", editable = true }
 
 [tool.pixi.tasks]
 

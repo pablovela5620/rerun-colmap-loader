@@ -97,6 +97,7 @@ def read_and_log_sparse_reconstruction(
     dataset_path: Path, filter_output: bool, resize: tuple[int, int] | None
 ) -> None:
     print("Reading sparse COLMAP reconstruction")
+    # make sure dataset_path is a directory
     try:
         cameras, images, points3D = read_model(dataset_path / "sparse", ext=".bin")
     except FileNotFoundError:
@@ -207,29 +208,28 @@ def read_and_log_sparse_reconstruction(
         )
 
 
-# The Rerun Viewer will always pass these two pieces of information:
-# 1. The path to be loaded, as a positional arg.
-# 2. A shared recording ID, via the `--recording-id` flag.
-#
-# It is up to you whether you make use of that shared recording ID or not.
-# If you use it, the data will end up in the same recording as all other plugins interested in
-# that file, otherwise you can just create a dedicated recording for it. Or both.
-parser = ArgumentParser(
-    description="""
-Colmap reconstruction loader for Rerun.
-
-To try it out, copy it in your $PATH as `rerun-colmap-loader`,
-then open a colmap reconstruction with Rerun (`rerun `).
-    """
-)
-parser.add_argument("filepath", type=str)
-parser.add_argument("--recording-id", type=str)
-args = parser.parse_args()
-
-
 def main() -> None:
+    # The Rerun Viewer will always pass these two pieces of information:
+    # 1. The path to be loaded, as a positional arg.
+    # 2. A shared recording ID, via the `--recording-id` flag.
+    #
+    # It is up to you whether you make use of that shared recording ID or not.
+    # If you use it, the data will end up in the same recording as all other plugins interested in
+    # that file, otherwise you can just create a dedicated recording for it. Or both.
+    parser = ArgumentParser(
+        description="""
+    Colmap reconstruction loader for Rerun.
+
+    To try it out, copy it in your $PATH as `rerun-colmap-loader`,
+    then open a colmap reconstruction with Rerun (`rerun `).
+        """
+    )
+    parser.add_argument("filepath", type=Path)
+    parser.add_argument("--recording-id", type=str)
+    args = parser.parse_args()
+
     is_file: bool = os.path.isfile(args.filepath)
-    is_colmap_bin_file: bool = ".bin" in args.filepath
+    is_colmap_bin_file: bool = ".bin" in str(args.filepath)
 
     # iterate through all files in the directory
 
@@ -237,14 +237,14 @@ def main() -> None:
     if not is_file or not is_colmap_bin_file:
         exit(rr.EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE)
 
-    rr.init(
-        "rerun_example_external_data_loader_tfrecord", recording_id=args.recording_id
-    )
+    rr.init("rerun_colmap_loader", recording_id=args.recording_id)
     # The most important part of this: log to standard output so the Rerun Viewer can ingest it!
     rr.stdout()
     print("Loading COLMAP reconstruction")
-    rr.log("text", rr.TextDocument("Loading COLMAP reconstruction"))
-    # read_and_log_sparse_reconstruction(args.filepath, filter_output=False, resize=None)
+    # rr.log("text", rr.TextDocument("Loading COLMAP reconstruction"))
+    read_and_log_sparse_reconstruction(
+        args.filepath.parent.parent.parent, filter_output=False, resize=None
+    )
 
 
 if __name__ == "__main__":

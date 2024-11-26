@@ -2433,10 +2433,10 @@ packages:
   - chardet>=3.0.2,<6 ; extra == 'use-chardet-on-py3'
   requires_python: '>=3.8'
 - kind: pypi
-  name: rerun-colmap-loader
+  name: rerun-loader-colmap
   version: 0.1.0
   path: .
-  sha256: 31234e559f912aa5b44bcd1a3c054f636b7cb6ce9978f9f4ef3f8325ea2498fb
+  sha256: 08858e7892da99189ba5a66bcdcf747cb2e2865b7dbcfbadad8bfeba9c5bc30d
   requires_dist:
   - opencv-python>=4.10.0.84,<5
   - requests>=2.32.3,<3
