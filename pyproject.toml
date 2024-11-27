@@ -32,4 +32,4 @@ rerun_loader_colmap = { path = ".", editable = true }
 
 [tool.pixi.dependencies]
 rerun-sdk = ">=0.20.1,<0.21"
-# rerun-sdk = ">=0.20.1,<0.21"
+icecream = ">=2.1.3,<3"

@@ -9,7 +9,7 @@ import re
 import zipfile
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Final
+from typing import Final, Literal
 
 import cv2
 import numpy as np
@@ -19,7 +19,7 @@ import rerun as rr  # pip install rerun-sdk
 import rerun.blueprint as rrb
 from tqdm import tqdm
 
-from .read_write_model import Camera, read_model  # type: ignore[attr-defined]
+from .read_write_model import Camera, Image, read_model  # type: ignore[attr-defined]
 
 DATASET_DIR: Final = Path(__file__).parent.parent / "dataset"
 DATASET_URL_BASE: Final = "https://storage.googleapis.com/rerun-example-datasets/colmap"
@@ -94,16 +94,15 @@ def download_with_progress(url: str) -> io.BytesIO:
 
 
 def read_and_log_sparse_reconstruction(
-    dataset_path: Path, filter_output: bool, resize: tuple[int, int] | None
+    model_path: Path,
+    filter_output: bool,
+    resize: tuple[int, int] | None,
+    extention: Literal[".bin", ".txt"],
 ) -> None:
     print("Reading sparse COLMAP reconstruction")
     # make sure dataset_path is a directory
-    try:
-        cameras, images, points3D = read_model(dataset_path / "sparse", ext=".bin")
-    except FileNotFoundError:
-        cameras, images, points3D = read_model(
-            dataset_path / "sparse" / "0", ext=".bin"
-        )
+    images: dict[int, Image]
+    cameras, images, points3D = read_model(model_path, ext=extention)
 
     print("Building visualization by logging to Rerun")
 
@@ -118,15 +117,36 @@ def read_and_log_sparse_reconstruction(
     rr.log("/", rr.ViewCoordinates.RIGHT_HAND_Y_DOWN, static=True)
     rr.log("plot/avg_reproj_err", rr.SeriesLine(color=[240, 45, 58]), static=True)
 
+    # try to find the directory with the images based on the model path
+    def find_images_dir(model_path: Path, images: dict[int, Image]) -> Path | None:
+        # get the first image in the images dict
+        first_image: Image = list(images.values())[0]
+        # check a few differnet spots based on the model path to see if the image exists
+        # if it does, return the path to the images directory
+        # this asssume sparse
+        possible_parent_paths: list[Path] = [
+            model_path.parent,  # sparse (like colmap)
+            model_path.parent.parent,  # sparse/0 (like brush)
+            model_path.parent.parent.parent,  # colmap/sparse/0 (like nerfstudio)
+        ]
+        for parent_path in possible_parent_paths:
+            image_path: Path = parent_path / "images" / first_image.name
+            if image_path.exists():
+                images_dir: Path = image_path.parent
+                return images_dir
+
+    images_dir: Path | None = find_images_dir(model_path, images)
     # Iterate through images (video frames) logging data related to each frame.
     for image in sorted(images.values(), key=lambda im: im.name):  # type: ignore[no-any-return]
-        image_file = dataset_path.parent / "images" / image.name
-
-        if not os.path.exists(image_file):
-            continue
+        if images_dir is None:
+            # just set as image name if we can't find the images directory
+            image_file = image.name
+            print("Could not find images directory, setting image file as image name")
+        else:
+            image_file = images_dir / image.name
 
         # COLMAP sets image ids that don't match the original video frame
-        idx_match = re.search(r"\d+", image.name)
+        idx_match: re.Match[str] | None = re.search(r"\d+", image.name)
         assert idx_match is not None
         frame_idx = int(idx_match.group(0))
 
@@ -174,9 +194,7 @@ def read_and_log_sparse_reconstruction(
                 axis_length=0.5,
             ),
         )
-        rr.log(
-            "camera", rr.ViewCoordinates.RDF, static=True
-        )  # X=Right, Y=Down, Z=Forward
+        rr.log("camera", rr.ViewCoordinates.RDF, static=True)
 
         # Log camera intrinsics
         # assert camera.model == "PINHOLE"
@@ -190,6 +208,9 @@ def read_and_log_sparse_reconstruction(
             ),
         )
 
+        if not os.path.exists(image_file):
+            continue
+
         if resize:
             bgr = cv2.imread(str(image_file))
             bgr = cv2.resize(bgr, resize)
@@ -200,12 +221,21 @@ def read_and_log_sparse_reconstruction(
         else:
             rr.log(
                 "camera/image",
-                rr.EncodedImage(path=dataset_path.parent / "images" / image.name),
+                rr.EncodedImage(path=images_dir / image.name),
             )
 
         rr.log(
             "camera/image/keypoints", rr.Points2D(visible_xys, colors=[34, 138, 167])
         )
+
+
+def check_colmap_files_exist(fp: Path) -> bool:
+    required_files: list[str] = ["images", "cameras", "points3D"]
+    # makes sure that the images, cameras, and points3D files are present
+    all_files: list[Path] = list(fp.parent.glob(f"*{fp.suffix}"))
+    all_stems: list[str] = [f.stem for f in all_files]
+    missing_files: list[str] = [f for f in required_files if f not in all_stems]
+    return len(missing_files) == 0
 
 
 def main() -> None:
@@ -229,21 +259,21 @@ def main() -> None:
     args = parser.parse_args()
 
     is_file: bool = os.path.isfile(args.filepath)
-    is_colmap_bin_file: bool = ".bin" in str(args.filepath)
-
-    # iterate through all files in the directory
+    files_exist: bool = check_colmap_files_exist(args.filepath)
 
     # Inform the Rerun Viewer that we do not support that kind of file.
-    if not is_file or not is_colmap_bin_file:
+    if not is_file or not files_exist:
         exit(rr.EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE)
 
     rr.init("rerun_colmap_loader", recording_id=args.recording_id)
     # The most important part of this: log to standard output so the Rerun Viewer can ingest it!
     rr.stdout()
     print("Loading COLMAP reconstruction")
-    # rr.log("text", rr.TextDocument("Loading COLMAP reconstruction"))
     read_and_log_sparse_reconstruction(
-        args.filepath.parent.parent.parent, filter_output=False, resize=None
+        args.filepath.parent,
+        filter_output=False,
+        resize=None,
+        extention=args.filepath.suffix,
     )
 
 

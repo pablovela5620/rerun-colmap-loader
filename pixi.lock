@@ -34,6 +34,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-h4bc722e_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/c-ares-1.34.3-heb4867d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ca-certificates-2024.8.30-hbcca054_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/comm-0.2.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/decorator-5.1.1-pyhd8ed1ab_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.2.2-pyhd8ed1ab_0.conda
@@ -41,6 +42,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/freetype-2.12.1-h267a509_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gflags-2.2.2-h5888daf_1005.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/glog-0.7.1-hbabe93e_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/icecream-2.1.3-pyhd8ed1ab_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/idna-3.10-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ipython-8.29.0-pyh707e725_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ipywidgets-8.1.5-pyhd8ed1ab_0.conda
@@ -687,6 +689,23 @@ packages:
   sha256: 8cda06946eac330cbe6598f77bb54e690b4ca93f593dee1568ad22b04f347c15
   requires_python: '>=3.7.0'
 - kind: conda
+  name: colorama
+  version: 0.4.6
+  build: pyhd8ed1ab_0
+  subdir: noarch
+  noarch: python
+  url: https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_0.tar.bz2
+  sha256: 2c1b2e9755ce3102bca8d69e8f26e4f087ece73f50418186aee7c74bef8e1698
+  md5: 3faab06a954c2a04039983f2c4a50d99
+  depends:
+  - python >=3.7
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/colorama?source=hash-mapping
+  size: 25170
+  timestamp: 1666700778190
+- kind: conda
   name: comm
   version: 0.2.2
   build: pyhd8ed1ab_0
@@ -806,6 +825,27 @@ packages:
   purls: []
   size: 143452
   timestamp: 1718284177264
+- kind: conda
+  name: icecream
+  version: 2.1.3
+  build: pyhd8ed1ab_0
+  subdir: noarch
+  noarch: python
+  url: https://conda.anaconda.org/conda-forge/noarch/icecream-2.1.3-pyhd8ed1ab_0.tar.bz2
+  sha256: c63d1f83d7b6577f38c28158533ef4d77c61756f20f7861aecd80136740d2ebb
+  md5: 6e9df79dc265bd348b831b41d6c1784d
+  depends:
+  - asttokens >=2.0.1
+  - colorama >=0.3.9
+  - executing >=0.3.1
+  - pygments >=2.2.0
+  - python >=2.7
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/icecream?source=hash-mapping
+  size: 12530
+  timestamp: 1658422260428
 - kind: conda
   name: idna
   version: '3.10'
@@ -2436,7 +2476,7 @@ packages:
   name: rerun-loader-colmap
   version: 0.1.0
   path: .
-  sha256: 08858e7892da99189ba5a66bcdcf747cb2e2865b7dbcfbadad8bfeba9c5bc30d
+  sha256: 225061e2b02d147a70904ed8c4158ba80760ffc995577c8d71d5e3d33fd57835
   requires_dist:
   - opencv-python>=4.10.0.84,<5
   - requests>=2.32.3,<3
